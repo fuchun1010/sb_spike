@@ -3,6 +3,7 @@ package com.tank.controller.datasource;
 import com.tank.common.ErrorMessage;
 import com.tank.common.IndexUtil;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ import static org.springframework.http.HttpStatus.CREATED;
 @RestController
 @CrossOrigin
 @RequestMapping("/datasource")
+@Slf4j
 public class DataSourceController {
 
   @PostMapping("/create")
@@ -68,6 +70,7 @@ public class DataSourceController {
 
   @GetMapping("/{id}/record")
   public ResponseEntity findBy(@PathVariable @NonNull final String id) {
+    log.info(String.format("user id is:%s", id));
     final ResponseEntity response = CompletableFuture.<String>supplyAsync(() -> this.indexUtil.indexUrlWithId("customer", id))
         .handleAsync((url, e) -> {
           val res = this.restTemplate.getForObject(url, Map.class);
