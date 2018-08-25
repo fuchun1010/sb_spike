@@ -1,5 +1,6 @@
 package com.tank.controller.datasource;
 
+import com.tank.common.ErrorMessage;
 import com.tank.common.IndexUtil;
 import lombok.NonNull;
 import lombok.val;
@@ -13,7 +14,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static org.springframework.http.HttpStatus.CREATED;
-import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
 /**
  * @author fuchun
@@ -24,8 +24,8 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 public class DataSourceController {
 
   @PostMapping("/create")
-  public ResponseEntity create(@RequestBody @NonNull Map<String, Object> request) {
-    ResponseEntity response = CompletableFuture.<String>supplyAsync(() -> request.get("name").toString())
+  public ResponseEntity create(@RequestBody @NonNull final Map<String, Object> request) {
+    final ResponseEntity response = CompletableFuture.<String>supplyAsync(() -> request.get("name").toString())
         .handleAsync((indexName, e) -> {
           val url = indexUtil.indexUrl(indexName);
           System.out.println(url);
@@ -50,35 +50,30 @@ public class DataSourceController {
 
           return ResponseEntity.status(CREATED).build();
         })
-        .exceptionally(e -> {
-          val errorMsg = new HashMap<String, Object>();
-          errorMsg.put("code", 500);
-          errorMsg.put("message", e.getMessage());
-          return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(errorMsg);
-        }).join();
+        .exceptionally(ErrorMessage::errorTips).join();
     return response;
   }
 
   @GetMapping("/list")
   public ResponseEntity list() {
-    val url = "http://localhost:9200/customer/_search?pretty";
-    val response = this.restTemplate.getForObject(url, Map.class);
-    return ResponseEntity.ok(response);
+    ResponseEntity resp = CompletableFuture.<String>supplyAsync(() -> {
+      val url = this.indexUtil.indexUrl("customer");
+      return url + "/_search";
+    }).handleAsync((url, e) -> {
+      val rs = this.restTemplate.getForObject(url, Map.class);
+      return ResponseEntity.ok(rs);
+    }).exceptionally(ErrorMessage::errorTips).join();
+    return ResponseEntity.ok(resp);
   }
 
   @GetMapping("/{id}/record")
   public ResponseEntity findBy(@PathVariable @NonNull final String id) {
-    ResponseEntity response = CompletableFuture.<String>supplyAsync(() -> this.indexUtil.indexUrlWithId("customer", id))
+    final ResponseEntity response = CompletableFuture.<String>supplyAsync(() -> this.indexUtil.indexUrlWithId("customer", id))
         .handleAsync((url, e) -> {
           val res = this.restTemplate.getForObject(url, Map.class);
           return ResponseEntity.ok(res.get("_source"));
         })
-        .exceptionally(e -> {
-          val errorMsg = new HashMap<String, Object>();
-          errorMsg.put("code", 500);
-          errorMsg.put("message", e.getMessage());
-          return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(errorMsg);
-        }).join();
+        .exceptionally(ErrorMessage::errorTips).join();
     return response;
   }
 
