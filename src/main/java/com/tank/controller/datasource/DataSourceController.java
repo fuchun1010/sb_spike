@@ -2,6 +2,7 @@ package com.tank.controller.datasource;
 
 import com.tank.common.ErrorMessage;
 import com.tank.common.IndexUtil;
+import com.tank.common.UrlPrefix;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -21,7 +22,7 @@ import static org.springframework.http.HttpStatus.CREATED;
  */
 @RestController
 @CrossOrigin
-@RequestMapping("/datasource")
+@RequestMapping(UrlPrefix.api + "datasource")
 @Slf4j
 public class DataSourceController {
 
